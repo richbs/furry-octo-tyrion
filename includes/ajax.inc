@@ -185,7 +185,7 @@
  * in a degraded state or not.
  *
  * When responding to Ajax requests, the server should do what it needs to do
- * for that request, then create a commands array. This commands array will
+ 	* for that request, then create a commands array. This commands array will
  * be converted to a JSON object and returned to the client, which will then
  * iterate over the array and process it like a macro language.
  *
@@ -230,75 +230,75 @@
  *   functions.
  */
 function ajax_render($commands = array()) {
-  // Ajax responses aren't rendered with html.tpl.php, so we have to call
-  // drupal_get_css() and drupal_get_js() here, in order to have new files added
-  // during this request to be loaded by the page. We only want to send back
-  // files that the page hasn't already loaded, so we implement simple diffing
-  // logic using array_diff_key().
-  foreach (array('css', 'js') as $type) {
-    // It is highly suspicious if $_POST['ajax_page_state'][$type] is empty,
-    // since the base page ought to have at least one JS file and one CSS file
-    // loaded. It probably indicates an error, and rather than making the page
-    // reload all of the files, instead we return no new files.
-    if (empty($_POST['ajax_page_state'][$type])) {
-      $items[$type] = array();
-    }
-    else {
-      $function = 'drupal_add_' . $type;
-      $items[$type] = $function();
-      drupal_alter($type, $items[$type]);
-      // @todo Inline CSS and JS items are indexed numerically. These can't be
-      //   reliably diffed with array_diff_key(), since the number can change
-      //   due to factors unrelated to the inline content, so for now, we strip
-      //   the inline items from Ajax responses, and can add support for them
-      //   when drupal_add_css() and drupal_add_js() are changed to using md5()
-      //   or some other hash of the inline content.
-      foreach ($items[$type] as $key => $item) {
-        if (is_numeric($key)) {
-          unset($items[$type][$key]);
-        }
-      }
-      // Ensure that the page doesn't reload what it already has.
-      $items[$type] = array_diff_key($items[$type], $_POST['ajax_page_state'][$type]);
-    }
-  }
+	// Ajax responses aren't rendered with html.tpl.php, so we have to call
+	// drupal_get_css() and drupal_get_js() here, in order to have new files added
+	// during this request to be loaded by the page. We only want to send back
+	// files that the page hasn't already loaded, so we implement simple diffing
+	// logic using array_diff_key().
+	foreach (array('css', 'js') as $type) {
+		// It is highly suspicious if $_POST['ajax_page_state'][$type] is empty,
+		// since the base page ought to have at least one JS file and one CSS file
+		// loaded. It probably indicates an error, and rather than making the page
+		// reload all of the files, instead we return no new files.
+		if (empty($_POST['ajax_page_state'][$type])) {
+			$items[$type] = array();
+		}
+		else {
+			$function = 'drupal_add_' . $type;
+			$items[$type] = $function();
+			drupal_alter($type, $items[$type]);
+			// @todo Inline CSS and JS items are indexed numerically. These can't be
+			//   reliably diffed with array_diff_key(), since the number can change
+			//   due to factors unrelated to the inline content, so for now, we strip
+			//   the inline items from Ajax responses, and can add support for them
+			//   when drupal_add_css() and drupal_add_js() are changed to using md5()
+			//   or some other hash of the inline content.
+			foreach ($items[$type] as $key => $item) {
+				if (is_numeric($key)) {
+					unset($items[$type][$key]);
+				}
+			}
+			// Ensure that the page doesn't reload what it already has.
+			$items[$type] = array_diff_key($items[$type], $_POST['ajax_page_state'][$type]);
+		}
+	}
 
-  // Render the HTML to load these files, and add AJAX commands to insert this
-  // HTML in the page. We pass TRUE as the $skip_alter argument to prevent the
-  // data from being altered again, as we already altered it above. Settings are
-  // handled separately, afterwards.
-  if (isset($items['js']['settings'])) {
-    unset($items['js']['settings']);
-  }
-  $styles = drupal_get_css($items['css'], TRUE);
-  $scripts_footer = drupal_get_js('footer', $items['js'], TRUE);
-  $scripts_header = drupal_get_js('header', $items['js'], TRUE);
+	// Render the HTML to load these files, and add AJAX commands to insert this
+	// HTML in the page. We pass TRUE as the $skip_alter argument to prevent the
+	// data from being altered again, as we already altered it above. Settings are
+	// handled separately, afterwards.
+	if (isset($items['js']['settings'])) {
+		unset($items['js']['settings']);
+	}
+	$styles = drupal_get_css($items['css'], TRUE);
+	$scripts_footer = drupal_get_js('footer', $items['js'], TRUE);
+	$scripts_header = drupal_get_js('header', $items['js'], TRUE);
 
-  $extra_commands = array();
-  if (!empty($styles)) {
-    $extra_commands[] = ajax_command_prepend('head', $styles);
-  }
-  if (!empty($scripts_header)) {
-    $extra_commands[] = ajax_command_prepend('head', $scripts_header);
-  }
-  if (!empty($scripts_footer)) {
-    $extra_commands[] = ajax_command_append('body', $scripts_footer);
-  }
-  if (!empty($extra_commands)) {
-    $commands = array_merge($extra_commands, $commands);
-  }
+	$extra_commands = array();
+	if (!empty($styles)) {
+		$extra_commands[] = ajax_command_prepend('head', $styles);
+	}
+	if (!empty($scripts_header)) {
+		$extra_commands[] = ajax_command_prepend('head', $scripts_header);
+	}
+	if (!empty($scripts_footer)) {
+		$extra_commands[] = ajax_command_append('body', $scripts_footer);
+	}
+	if (!empty($extra_commands)) {
+		$commands = array_merge($extra_commands, $commands);
+	}
 
-  // Now add a command to merge changes and additions to Drupal.settings.
-  $scripts = drupal_add_js();
-  if (!empty($scripts['settings'])) {
-    $settings = $scripts['settings'];
-    array_unshift($commands, ajax_command_settings(call_user_func_array('array_merge_recursive', $settings['data']), TRUE));
-  }
+	// Now add a command to merge changes and additions to Drupal.settings.
+	$scripts = drupal_add_js();
+	if (!empty($scripts['settings'])) {
+		$settings = $scripts['settings'];
+		array_unshift($commands, ajax_command_settings(call_user_func_array('array_merge_recursive', $settings['data']), TRUE));
+	}
 
-  // Allow modules to alter any Ajax response.
-  drupal_alter('ajax_render', $commands);
+	// Allow modules to alter any Ajax response.
+	drupal_alter('ajax_render', $commands);
 
-  return drupal_json_encode($commands);
+	return drupal_json_encode($commands);
 }
 
 /**
@@ -315,37 +315,37 @@ function ajax_render($commands = array()) {
  *   @endcode
  */
 function ajax_get_form() {
-  $form_state = form_state_defaults();
+	$form_state = form_state_defaults();
 
-  $form_build_id = $_POST['form_build_id'];
+	$form_build_id = $_POST['form_build_id'];
 
-  // Get the form from the cache.
-  $form = form_get_cache($form_build_id, $form_state);
-  if (!$form) {
-    // If $form cannot be loaded from the cache, the form_build_id in $_POST
-    // must be invalid, which means that someone performed a POST request onto
-    // system/ajax without actually viewing the concerned form in the browser.
-    // This is likely a hacking attempt as it never happens under normal
-    // circumstances, so we just do nothing.
-    watchdog('ajax', 'Invalid form POST data.', array(), WATCHDOG_WARNING);
-    drupal_exit();
-  }
+	// Get the form from the cache.
+	$form = form_get_cache($form_build_id, $form_state);
+	if (!$form) {
+		// If $form cannot be loaded from the cache, the form_build_id in $_POST
+		// must be invalid, which means that someone performed a POST request onto
+		// system/ajax without actually viewing the concerned form in the browser.
+		// This is likely a hacking attempt as it never happens under normal
+		// circumstances, so we just do nothing.
+		watchdog('ajax', 'Invalid form POST data.', array(), WATCHDOG_WARNING);
+		drupal_exit();
+	}
 
-  // Since some of the submit handlers are run, redirects need to be disabled.
-  $form_state['no_redirect'] = TRUE;
+	// Since some of the submit handlers are run, redirects need to be disabled.
+	$form_state['no_redirect'] = TRUE;
 
-  // When a form is rebuilt after Ajax processing, its #build_id and #action
-  // should not change.
-  // @see drupal_rebuild_form()
-  $form_state['rebuild_info']['copy']['#build_id'] = TRUE;
-  $form_state['rebuild_info']['copy']['#action'] = TRUE;
+	// When a form is rebuilt after Ajax processing, its #build_id and #action
+	// should not change.
+	// @see drupal_rebuild_form()
+	$form_state['rebuild_info']['copy']['#build_id'] = TRUE;
+	$form_state['rebuild_info']['copy']['#action'] = TRUE;
 
-  // The form needs to be processed; prepare for that by setting a few internal
-  // variables.
-  $form_state['input'] = $_POST;
-  $form_id = $form['#form_id'];
+	// The form needs to be processed; prepare for that by setting a few internal
+	// variables.
+	$form_state['input'] = $_POST;
+	$form_id = $form['#form_id'];
 
-  return array($form, $form_state, $form_id, $form_build_id);
+	return array($form, $form_state, $form_id, $form_build_id);
 }
 
 /**
@@ -366,21 +366,21 @@ function ajax_get_form() {
  * @see system_menu()
  */
 function ajax_form_callback() {
-  list($form, $form_state) = ajax_get_form();
-  drupal_process_form($form['#form_id'], $form, $form_state);
+	list($form, $form_state) = ajax_get_form();
+	drupal_process_form($form['#form_id'], $form, $form_state);
 
-  // We need to return the part of the form (or some other content) that needs
-  // to be re-rendered so the browser can update the page with changed content.
-  // Since this is the generic menu callback used by many Ajax elements, it is
-  // up to the #ajax['callback'] function of the element (may or may not be a
-  // button) that triggered the Ajax request to determine what needs to be
-  // rendered.
-  if (!empty($form_state['triggering_element'])) {
-    $callback = $form_state['triggering_element']['#ajax']['callback'];
-  }
-  if (!empty($callback) && function_exists($callback)) {
-    return $callback($form, $form_state);
-  }
+	// We need to return the part of the form (or some other content) that needs
+	// to be re-rendered so the browser can update the page with changed content.
+	// Since this is the generic menu callback used by many Ajax elements, it is
+	// up to the #ajax['callback'] function of the element (may or may not be a
+	// button) that triggered the Ajax request to determine what needs to be
+	// rendered.
+	if (!empty($form_state['triggering_element'])) {
+		$callback = $form_state['triggering_element']['#ajax']['callback'];
+	}
+	if (!empty($callback) && function_exists($callback)) {
+		return $callback($form, $form_state);
+	}
 }
 
 /**
@@ -404,19 +404,19 @@ function ajax_form_callback() {
  * @see file_menu()
  */
 function ajax_base_page_theme() {
-  if (!empty($_POST['ajax_page_state']['theme']) && !empty($_POST['ajax_page_state']['theme_token'])) {
-    $theme = $_POST['ajax_page_state']['theme'];
-    $token = $_POST['ajax_page_state']['theme_token'];
+	if (!empty($_POST['ajax_page_state']['theme']) && !empty($_POST['ajax_page_state']['theme_token'])) {
+		$theme = $_POST['ajax_page_state']['theme'];
+		$token = $_POST['ajax_page_state']['theme_token'];
 
-    // Prevent a request forgery from giving a person access to a theme they
-    // shouldn't be otherwise allowed to see. However, since everyone is allowed
-    // to see the default theme, token validation isn't required for that, and
-    // bypassing it allows most use-cases to work even when accessed from the
-    // page cache.
-    if ($theme === variable_get('theme_default', 'bartik') || drupal_valid_token($token, $theme)) {
-      return $theme;
-    }
-  }
+		// Prevent a request forgery from giving a person access to a theme they
+		// shouldn't be otherwise allowed to see. However, since everyone is allowed
+		// to see the default theme, token validation isn't required for that, and
+		// bypassing it allows most use-cases to work even when accessed from the
+		// page cache.
+		if ($theme === variable_get('theme_default', 'bartik') || drupal_valid_token($token, $theme)) {
+			return $theme;
+		}
+	}
 }
 
 /**
@@ -438,51 +438,51 @@ function ajax_base_page_theme() {
  * @see drupal_deliver_html_page()
  */
 function ajax_deliver($page_callback_result) {
-  // Browsers do not allow JavaScript to read the contents of a user's local
-  // files. To work around that, the jQuery Form plugin submits forms containing
-  // a file input element to an IFRAME, instead of using XHR. Browsers do not
-  // normally expect JSON strings as content within an IFRAME, so the response
-  // must be customized accordingly.
-  // @see http://malsup.com/jquery/form/#file-upload
-  // @see Drupal.ajax.prototype.beforeSend()
-  $iframe_upload = !empty($_POST['ajax_iframe_upload']);
+	// Browsers do not allow JavaScript to read the contents of a user's local
+	// files. To work around that, the jQuery Form plugin submits forms containing
+	// a file input element to an IFRAME, instead of using XHR. Browsers do not
+	// normally expect JSON strings as content within an IFRAME, so the response
+	// must be customized accordingly.
+	// @see http://malsup.com/jquery/form/#file-upload
+	// @see Drupal.ajax.prototype.beforeSend()
+	$iframe_upload = !empty($_POST['ajax_iframe_upload']);
 
-  // Emit a Content-Type HTTP header if none has been added by the page callback
-  // or by a wrapping delivery callback.
-  if (is_null(drupal_get_http_header('Content-Type'))) {
-    if (!$iframe_upload) {
-      // Standard JSON can be returned to a browser's XHR object, and to
-      // non-browser user agents.
-      // @see http://www.ietf.org/rfc/rfc4627.txt?number=4627
-      drupal_add_http_header('Content-Type', 'application/json; charset=utf-8');
-    }
-    else {
-      // Browser IFRAMEs expect HTML. With most other content types, Internet
-      // Explorer presents the user with a download prompt.
-      drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
-    }
-  }
+	// Emit a Content-Type HTTP header if none has been added by the page callback
+	// or by a wrapping delivery callback.
+	if (is_null(drupal_get_http_header('Content-Type'))) {
+		if (!$iframe_upload) {
+			// Standard JSON can be returned to a browser's XHR object, and to
+			// non-browser user agents.
+			// @see http://www.ietf.org/rfc/rfc4627.txt?number=4627
+			drupal_add_http_header('Content-Type', 'application/json; charset=utf-8');
+		}
+		else {
+			// Browser IFRAMEs expect HTML. With most other content types, Internet
+			// Explorer presents the user with a download prompt.
+			drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
+		}
+	}
 
-  // Print the response.
-  $commands = ajax_prepare_response($page_callback_result);
-  $json = ajax_render($commands);
-  if (!$iframe_upload) {
-    // Standard JSON can be returned to a browser's XHR object, and to
-    // non-browser user agents.
-    print $json;
-  }
-  else {
-    // Browser IFRAMEs expect HTML. Browser extensions, such as Linkification
-    // and Skype's Browser Highlighter, convert URLs, phone numbers, etc. into
-    // links. This corrupts the JSON response. Protect the integrity of the
-    // JSON data by making it the value of a textarea.
-    // @see http://malsup.com/jquery/form/#file-upload
-    // @see http://drupal.org/node/1009382
-    print '<textarea>' . $json . '</textarea>';
-  }
+	// Print the response.
+	$commands = ajax_prepare_response($page_callback_result);
+	$json = ajax_render($commands);
+	if (!$iframe_upload) {
+		// Standard JSON can be returned to a browser's XHR object, and to
+		// non-browser user agents.
+		print $json;
+	}
+	else {
+		// Browser IFRAMEs expect HTML. Browser extensions, such as Linkification
+		// and Skype's Browser Highlighter, convert URLs, phone numbers, etc. into
+		// links. This corrupts the JSON response. Protect the integrity of the
+		// JSON data by making it the value of a textarea.
+		// @see http://malsup.com/jquery/form/#file-upload
+		// @see http://drupal.org/node/1009382
+		print '<textarea>' . $json . '</textarea>';
+	}
 
-  // Perform end-of-request tasks.
-  ajax_footer();
+	// Perform end-of-request tasks.
+	ajax_footer();
 }
 
 /**
@@ -499,57 +499,57 @@ function ajax_deliver($page_callback_result) {
  *   An Ajax commands array that can be passed to ajax_render().
  */
 function ajax_prepare_response($page_callback_result) {
-  $commands = array();
-  if (!isset($page_callback_result)) {
-    // Simply delivering an empty commands array is sufficient. This results
-    // in the Ajax request being completed, but nothing being done to the page.
-  }
-  elseif (is_int($page_callback_result)) {
-    switch ($page_callback_result) {
-      case MENU_NOT_FOUND:
-        $commands[] = ajax_command_alert(t('The requested page could not be found.'));
-        break;
+	$commands = array();
+	if (!isset($page_callback_result)) {
+		// Simply delivering an empty commands array is sufficient. This results
+		// in the Ajax request being completed, but nothing being done to the page.
+	}
+	elseif (is_int($page_callback_result)) {
+		switch ($page_callback_result) {
+			case MENU_NOT_FOUND:
+				$commands[] = ajax_command_alert(t('The requested page could not be found.'));
+				break;
 
-      case MENU_ACCESS_DENIED:
-        $commands[] = ajax_command_alert(t('You are not authorized to access this page.'));
-        break;
+			case MENU_ACCESS_DENIED:
+				$commands[] = ajax_command_alert(t('You are not authorized to access this page.'));
+				break;
 
-      case MENU_SITE_OFFLINE:
-        $commands[] = ajax_command_alert(filter_xss_admin(variable_get('maintenance_mode_message',
-          t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal'))))));
-        break;
-    }
-  }
-  elseif (is_array($page_callback_result) && isset($page_callback_result['#type']) && ($page_callback_result['#type'] == 'ajax')) {
-    // Complex Ajax callbacks can return a result that contains an error message
-    // or a specific set of commands to send to the browser.
-    $page_callback_result += element_info('ajax');
-    $error = $page_callback_result['#error'];
-    if (isset($error) && $error !== FALSE) {
-      if ((empty($error) || $error === TRUE)) {
-        $error = t('An error occurred while handling the request: The server received invalid input.');
-      }
-      $commands[] = ajax_command_alert($error);
-    }
-    else {
-      $commands = $page_callback_result['#commands'];
-    }
-  }
-  else {
-    // Like normal page callbacks, simple Ajax callbacks can return HTML
-    // content, as a string or render array. This HTML is inserted in some
-    // relationship to #ajax['wrapper'], as determined by which jQuery DOM
-    // manipulation method is used. The method used is specified by
-    // #ajax['method']. The default method is 'replaceWith', which completely
-    // replaces the old wrapper element and its content with the new HTML.
-    $html = is_string($page_callback_result) ? $page_callback_result : drupal_render($page_callback_result);
-    $commands[] = ajax_command_insert(NULL, $html);
-    // Add the status messages inside the new content's wrapper element, so that
-    // on subsequent Ajax requests, it is treated as old content.
-    $commands[] = ajax_command_prepend(NULL, theme('status_messages'));
-  }
+			case MENU_SITE_OFFLINE:
+				$commands[] = ajax_command_alert(filter_xss_admin(variable_get('maintenance_mode_message',
+				t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal'))))));
+				break;
+		}
+	}
+	elseif (is_array($page_callback_result) && isset($page_callback_result['#type']) && ($page_callback_result['#type'] == 'ajax')) {
+		// Complex Ajax callbacks can return a result that contains an error message
+		// or a specific set of commands to send to the browser.
+		$page_callback_result += element_info('ajax');
+		$error = $page_callback_result['#error'];
+		if (isset($error) && $error !== FALSE) {
+			if ((empty($error) || $error === TRUE)) {
+				$error = t('An error occurred while handling the request: The server received invalid input.');
+			}
+			$commands[] = ajax_command_alert($error);
+		}
+		else {
+			$commands = $page_callback_result['#commands'];
+		}
+	}
+	else {
+		// Like normal page callbacks, simple Ajax callbacks can return HTML
+		// content, as a string or render array. This HTML is inserted in some
+		// relationship to #ajax['wrapper'], as determined by which jQuery DOM
+		// manipulation method is used. The method used is specified by
+		// #ajax['method']. The default method is 'replaceWith', which completely
+		// replaces the old wrapper element and its content with the new HTML.
+		$html = is_string($page_callback_result) ? $page_callback_result : drupal_render($page_callback_result);
+		$commands[] = ajax_command_insert(NULL, $html);
+		// Add the status messages inside the new content's wrapper element, so that
+		// on subsequent Ajax requests, it is treated as old content.
+		$commands[] = ajax_command_prepend(NULL, theme('status_messages'));
+	}
 
-  return $commands;
+	return $commands;
 }
 
 /**
@@ -561,18 +561,18 @@ function ajax_prepare_response($page_callback_result) {
  * @see drupal_page_footer()
  */
 function ajax_footer() {
-  // Even for Ajax requests, invoke hook_exit() implementations. There may be
-  // modules that need very fast Ajax responses, and therefore, run Ajax
-  // requests with an early bootstrap.
-  if (drupal_get_bootstrap_phase() == DRUPAL_BOOTSTRAP_FULL && (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update')) {
-    module_invoke_all('exit');
-  }
+	// Even for Ajax requests, invoke hook_exit() implementations. There may be
+	// modules that need very fast Ajax responses, and therefore, run Ajax
+	// requests with an early bootstrap.
+	if (drupal_get_bootstrap_phase() == DRUPAL_BOOTSTRAP_FULL && (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update')) {
+		module_invoke_all('exit');
+	}
 
-  // Commit the user session. See above comment about the possibility of this
-  // function running without session.inc loaded.
-  if (function_exists('drupal_session_commit')) {
-    drupal_session_commit();
-  }
+	// Commit the user session. See above comment about the possibility of this
+	// function running without session.inc loaded.
+	if (function_exists('drupal_session_commit')) {
+		drupal_session_commit();
+	}
 }
 
 /**
@@ -587,11 +587,11 @@ function ajax_footer() {
  * @see ajax_pre_render_element()
  */
 function ajax_process_form($element, &$form_state) {
-  $element = ajax_pre_render_element($element);
-  if (!empty($element['#ajax_processed'])) {
-    $form_state['cache'] = TRUE;
-  }
-  return $element;
+	$element = ajax_pre_render_element($element);
+	if (!empty($element['#ajax_processed'])) {
+		$form_state['cache'] = TRUE;
+	}
+	return $element;
 }
 
 /**
@@ -616,137 +616,137 @@ function ajax_process_form($element, &$form_state) {
  *   The processed element with the necessary JavaScript attached to it.
  */
 function ajax_pre_render_element($element) {
-  // Skip already processed elements.
-  if (isset($element['#ajax_processed'])) {
-    return $element;
-  }
-  // Initialize #ajax_processed, so we do not process this element again.
-  $element['#ajax_processed'] = FALSE;
+	// Skip already processed elements.
+	if (isset($element['#ajax_processed'])) {
+		return $element;
+	}
+	// Initialize #ajax_processed, so we do not process this element again.
+	$element['#ajax_processed'] = FALSE;
 
-  // Nothing to do if there is neither a callback nor a path.
-  if (!(isset($element['#ajax']['callback']) || isset($element['#ajax']['path']))) {
-    return $element;
-  }
+	// Nothing to do if there is neither a callback nor a path.
+	if (!(isset($element['#ajax']['callback']) || isset($element['#ajax']['path']))) {
+		return $element;
+	}
 
-  // Add a reasonable default event handler if none was specified.
-  if (isset($element['#ajax']) && !isset($element['#ajax']['event'])) {
-    switch ($element['#type']) {
-      case 'submit':
-      case 'button':
-      case 'image_button':
-        // Pressing the ENTER key within a textfield triggers the click event of
-        // the form's first submit button. Triggering Ajax in this situation
-        // leads to problems, like breaking autocomplete textfields, so we bind
-        // to mousedown instead of click.
-        // @see http://drupal.org/node/216059
-        $element['#ajax']['event'] = 'mousedown';
-        // Retain keyboard accessibility by setting 'keypress'. This causes
-        // ajax.js to trigger 'event' when SPACE or ENTER are pressed while the
-        // button has focus.
-        $element['#ajax']['keypress'] = TRUE;
-        // Binding to mousedown rather than click means that it is possible to
-        // trigger a click by pressing the mouse, holding the mouse button down
-        // until the Ajax request is complete and the button is re-enabled, and
-        // then releasing the mouse button. Set 'prevent' so that ajax.js binds
-        // an additional handler to prevent such a click from triggering a
-        // non-Ajax form submission. This also prevents a textfield's ENTER
-        // press triggering this button's non-Ajax form submission behavior.
-        if (!isset($element['#ajax']['prevent'])) {
-          $element['#ajax']['prevent'] = 'click';
-        }
-        break;
+	// Add a reasonable default event handler if none was specified.
+	if (isset($element['#ajax']) && !isset($element['#ajax']['event'])) {
+		switch ($element['#type']) {
+			case 'submit':
+			case 'button':
+			case 'image_button':
+				// Pressing the ENTER key within a textfield triggers the click event of
+				// the form's first submit button. Triggering Ajax in this situation
+				// leads to problems, like breaking autocomplete textfields, so we bind
+				// to mousedown instead of click.
+				// @see http://drupal.org/node/216059
+				$element['#ajax']['event'] = 'mousedown';
+				// Retain keyboard accessibility by setting 'keypress'. This causes
+				// ajax.js to trigger 'event' when SPACE or ENTER are pressed while the
+				// button has focus.
+				$element['#ajax']['keypress'] = TRUE;
+				// Binding to mousedown rather than click means that it is possible to
+				// trigger a click by pressing the mouse, holding the mouse button down
+				// until the Ajax request is complete and the button is re-enabled, and
+				// then releasing the mouse button. Set 'prevent' so that ajax.js binds
+				// an additional handler to prevent such a click from triggering a
+				// non-Ajax form submission. This also prevents a textfield's ENTER
+				// press triggering this button's non-Ajax form submission behavior.
+				if (!isset($element['#ajax']['prevent'])) {
+					$element['#ajax']['prevent'] = 'click';
+				}
+				break;
 
-      case 'password':
-      case 'textfield':
-      case 'textarea':
-        $element['#ajax']['event'] = 'blur';
-        break;
+			case 'password':
+			case 'textfield':
+			case 'textarea':
+				$element['#ajax']['event'] = 'blur';
+				break;
 
-      case 'radio':
-      case 'checkbox':
-      case 'select':
-        $element['#ajax']['event'] = 'change';
-        break;
+			case 'radio':
+			case 'checkbox':
+			case 'select':
+				$element['#ajax']['event'] = 'change';
+				break;
 
-      case 'link':
-        $element['#ajax']['event'] = 'click';
-        break;
+			case 'link':
+				$element['#ajax']['event'] = 'click';
+				break;
 
-      default:
-        return $element;
-    }
-  }
+			default:
+				return $element;
+		}
+	}
 
-  // Attach JavaScript settings to the element.
-  if (isset($element['#ajax']['event'])) {
-    $element['#attached']['library'][] = array('system', 'jquery.form');
-    $element['#attached']['library'][] = array('system', 'drupal.ajax');
+	// Attach JavaScript settings to the element.
+	if (isset($element['#ajax']['event'])) {
+		$element['#attached']['library'][] = array('system', 'jquery.form');
+		$element['#attached']['library'][] = array('system', 'drupal.ajax');
 
-    $settings = $element['#ajax'];
+		$settings = $element['#ajax'];
 
-    // Assign default settings.
-    $settings += array(
-      'path' => 'system/ajax',
-      'options' => array(),
-    );
+		// Assign default settings.
+		$settings += array(
+				'path' => 'system/ajax',
+				'options' => array(),
+		);
 
-    // @todo Legacy support. Remove in Drupal 8.
-    if (isset($settings['method']) && $settings['method'] == 'replace') {
-      $settings['method'] = 'replaceWith';
-    }
+		// @todo Legacy support. Remove in Drupal 8.
+		if (isset($settings['method']) && $settings['method'] == 'replace') {
+			$settings['method'] = 'replaceWith';
+		}
 
-    // Change path to URL.
-    $settings['url'] = url($settings['path'], $settings['options']);
-    unset($settings['path'], $settings['options']);
+		// Change path to URL.
+		$settings['url'] = url($settings['path'], $settings['options']);
+		unset($settings['path'], $settings['options']);
 
-    // Add special data to $settings['submit'] so that when this element
-    // triggers an Ajax submission, Drupal's form processing can determine which
-    // element triggered it.
-    // @see _form_element_triggered_scripted_submission()
-    if (isset($settings['trigger_as'])) {
-      // An element can add a 'trigger_as' key within #ajax to make the element
-      // submit as though another one (for example, a non-button can use this
-      // to submit the form as though a button were clicked). When using this,
-      // the 'name' key is always required to identify the element to trigger
-      // as. The 'value' key is optional, and only needed when multiple elements
-      // share the same name, which is commonly the case for buttons.
-      $settings['submit']['_triggering_element_name'] = $settings['trigger_as']['name'];
-      if (isset($settings['trigger_as']['value'])) {
-        $settings['submit']['_triggering_element_value'] = $settings['trigger_as']['value'];
-      }
-      unset($settings['trigger_as']);
-    }
-    elseif (isset($element['#name'])) {
-      // Most of the time, elements can submit as themselves, in which case the
-      // 'trigger_as' key isn't needed, and the element's name is used.
-      $settings['submit']['_triggering_element_name'] = $element['#name'];
-      // If the element is a (non-image) button, its name may not identify it
-      // uniquely, in which case a match on value is also needed.
-      // @see _form_button_was_clicked()
-      if (isset($element['#button_type']) && empty($element['#has_garbage_value'])) {
-        $settings['submit']['_triggering_element_value'] = $element['#value'];
-      }
-    }
+		// Add special data to $settings['submit'] so that when this element
+		// triggers an Ajax submission, Drupal's form processing can determine which
+		// element triggered it.
+		// @see _form_element_triggered_scripted_submission()
+		if (isset($settings['trigger_as'])) {
+			// An element can add a 'trigger_as' key within #ajax to make the element
+			// submit as though another one (for example, a non-button can use this
+			// to submit the form as though a button were clicked). When using this,
+			// the 'name' key is always required to identify the element to trigger
+			// as. The 'value' key is optional, and only needed when multiple elements
+			// share the same name, which is commonly the case for buttons.
+			$settings['submit']['_triggering_element_name'] = $settings['trigger_as']['name'];
+			if (isset($settings['trigger_as']['value'])) {
+				$settings['submit']['_triggering_element_value'] = $settings['trigger_as']['value'];
+			}
+			unset($settings['trigger_as']);
+		}
+		elseif (isset($element['#name'])) {
+			// Most of the time, elements can submit as themselves, in which case the
+			// 'trigger_as' key isn't needed, and the element's name is used.
+			$settings['submit']['_triggering_element_name'] = $element['#name'];
+			// If the element is a (non-image) button, its name may not identify it
+			// uniquely, in which case a match on value is also needed.
+			// @see _form_button_was_clicked()
+			if (isset($element['#button_type']) && empty($element['#has_garbage_value'])) {
+				$settings['submit']['_triggering_element_value'] = $element['#value'];
+			}
+		}
 
-    // Convert a simple #ajax['progress'] string into an array.
-    if (isset($settings['progress']) && is_string($settings['progress'])) {
-      $settings['progress'] = array('type' => $settings['progress']);
-    }
-    // Change progress path to a full URL.
-    if (isset($settings['progress']['path'])) {
-      $settings['progress']['url'] = url($settings['progress']['path']);
-      unset($settings['progress']['path']);
-    }
+		// Convert a simple #ajax['progress'] string into an array.
+		if (isset($settings['progress']) && is_string($settings['progress'])) {
+			$settings['progress'] = array('type' => $settings['progress']);
+		}
+		// Change progress path to a full URL.
+		if (isset($settings['progress']['path'])) {
+			$settings['progress']['url'] = url($settings['progress']['path']);
+			unset($settings['progress']['path']);
+		}
 
-    $element['#attached']['js'][] = array(
-      'type' => 'setting',
-      'data' => array('ajax' => array($element['#id'] => $settings)),
-    );
+		$element['#attached']['js'][] = array(
+				'type' => 'setting',
+				'data' => array('ajax' => array($element['#id'] => $settings)),
+		);
 
-    // Indicate that Ajax processing was successful.
-    $element['#ajax_processed'] = TRUE;
-  }
-  return $element;
+		// Indicate that Ajax processing was successful.
+		$element['#ajax_processed'] = TRUE;
+	}
+	return $element;
 }
 
 /**
@@ -778,10 +778,10 @@ function ajax_pre_render_element($element) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_alert($text) {
-  return array(
-    'command' => 'alert',
-    'text' => $text,
-  );
+	return array(
+			'command' => 'alert',
+			'text' => $text,
+	);
 }
 
 /**
@@ -806,13 +806,13 @@ function ajax_command_alert($text) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_insert($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => NULL,
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => NULL,
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -839,13 +839,13 @@ function ajax_command_insert($selector, $html, $settings = NULL) {
  * See @link http://docs.jquery.com/Manipulation/replaceWith#content jQuery replaceWith command @endlink
  */
 function ajax_command_replace($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'replaceWith',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'replaceWith',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -872,13 +872,13 @@ function ajax_command_replace($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Attributes/html#val
  */
 function ajax_command_html($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'html',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'html',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -905,13 +905,13 @@ function ajax_command_html($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Manipulation/prepend#content
  */
 function ajax_command_prepend($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'prepend',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'prepend',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -938,13 +938,13 @@ function ajax_command_prepend($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Manipulation/append#content
  */
 function ajax_command_append($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'append',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'append',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -971,13 +971,13 @@ function ajax_command_append($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Manipulation/after#content
  */
 function ajax_command_after($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'after',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'after',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -1004,13 +1004,13 @@ function ajax_command_after($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Manipulation/before#content
  */
 function ajax_command_before($selector, $html, $settings = NULL) {
-  return array(
-    'command' => 'insert',
-    'method' => 'before',
-    'selector' => $selector,
-    'data' => $html,
-    'settings' => $settings,
-  );
+	return array(
+			'command' => 'insert',
+			'method' => 'before',
+			'selector' => $selector,
+			'data' => $html,
+			'settings' => $settings,
+	);
 }
 
 /**
@@ -1033,10 +1033,10 @@ function ajax_command_before($selector, $html, $settings = NULL) {
  * @see http://docs.jquery.com/Manipulation/remove#expr
  */
 function ajax_command_remove($selector) {
-  return array(
-    'command' => 'remove',
-    'selector' => $selector,
-  );
+	return array(
+			'command' => 'remove',
+			'selector' => $selector,
+	);
 }
 
 /**
@@ -1059,11 +1059,11 @@ function ajax_command_remove($selector) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_changed($selector, $asterisk = '') {
-  return array(
-    'command' => 'changed',
-    'selector' => $selector,
-    'asterisk' => $asterisk,
-  );
+	return array(
+			'command' => 'changed',
+			'selector' => $selector,
+			'asterisk' => $asterisk,
+	);
 }
 
 /**
@@ -1087,11 +1087,11 @@ function ajax_command_changed($selector, $asterisk = '') {
  * @see http://docs.jquery.com/CSS/css#properties
  */
 function ajax_command_css($selector, $argument) {
-  return array(
-    'command' => 'css',
-    'selector' => $selector,
-    'argument' => $argument,
-  );
+	return array(
+			'command' => 'css',
+			'selector' => $selector,
+			'argument' => $argument,
+	);
 }
 
 /**
@@ -1118,11 +1118,11 @@ function ajax_command_css($selector, $argument) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_settings($argument, $merge = FALSE) {
-  return array(
-    'command' => 'settings',
-    'settings' => $argument,
-    'merge' => $merge,
-  );
+	return array(
+			'command' => 'settings',
+			'settings' => $argument,
+			'merge' => $merge,
+	);
 }
 
 /**
@@ -1149,12 +1149,12 @@ function ajax_command_settings($argument, $merge = FALSE) {
  * @see http://docs.jquery.com/Core/data#namevalue
  */
 function ajax_command_data($selector, $name, $value) {
-  return array(
-    'command' => 'data',
-    'selector' => $selector,
-    'name' => $name,
-    'value' => $value,
-  );
+	return array(
+			'command' => 'data',
+			'selector' => $selector,
+			'name' => $name,
+			'value' => $value,
+	);
 }
 
 /**
@@ -1180,12 +1180,12 @@ function ajax_command_data($selector, $name, $value) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_invoke($selector, $method, array $arguments = array()) {
-  return array(
-    'command' => 'invoke',
-    'selector' => $selector,
-    'method' => $method,
-    'arguments' => $arguments,
-  );
+	return array(
+			'command' => 'invoke',
+			'selector' => $selector,
+			'method' => $method,
+			'arguments' => $arguments,
+	);
 }
 
 /**
@@ -1204,8 +1204,8 @@ function ajax_command_invoke($selector, $method, array $arguments = array()) {
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_restripe($selector) {
-  return array(
-    'command' => 'restripe',
-    'selector' => $selector,
-  );
+	return array(
+			'command' => 'restripe',
+			'selector' => $selector,
+	);
 }
