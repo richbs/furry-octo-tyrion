@@ -119,9 +119,7 @@ html {
    * To use a 12px font size on the page, delete the 16px and 14px declarations.
    */
 
-  /* Use a 12px base font size */
-  font-size: 75%; /* 16px x 75% = 12px */
-  /* Use a 14px base font size */
+	  /* Use a 14px base font size */
   font-size: 87.5%; /* 16px x .875 = 14px */
 
   /* Use a 16px base font size */
@@ -132,6 +130,8 @@ html {
 
   /* Establish a vertical rhythm. */
   line-height: 1.5em;
+  
+  color:#333;
 }
 
 /*
@@ -199,7 +199,7 @@ textarea {
 
    */
 
-  font-family: Verdana, Tahoma, "DejaVu Sans", sans-serif;
+  font-family: Georgia, serif;  
 }
 
 /*
@@ -357,7 +357,7 @@ dfn {
 
 mark {
   background: #ff0;
-  color: #000;
+  color: #333;
 }
 
 /*

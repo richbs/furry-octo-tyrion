@@ -15,9 +15,17 @@
 body {
   margin: 0;
   padding: 0;
+  background-color: #ff6600; /* fallback color if gradients are not supported */
+  background-image: -webkit-linear-gradient(top, #fff, #ff6600); /* For Chrome and Safari */
+  background-image: -moz-linear-gradient(top, #fff, #ff6600); /* For old Fx (3.6 to 15) */
+  background-image: -ms-linear-gradient(top, #fff, #ff6600); /* For pre-releases of IE 10*/
+  background-image: -o-linear-gradient(top, #fff, #ff6600); /* For old Opera (11.1 to 12.0) */
+  background-image: linear-gradient(to bottom, #fff, #ff6600); /* Standard syntax; must be last */
 }
 
 #page {
+	background-color: #fff;
+	max-width: 960px;
 }
 
 /*
@@ -43,6 +51,7 @@ body {
  */
 
 #header {
+
 }
 
 #logo { /* Wrapping link for logo */
@@ -56,6 +65,10 @@ body {
 
 #name-and-slogan { /* Wrapper for website name and slogan */
   float: left;
+  margin: 0 0 0 3%;
+  text-shadow: 10px 5px 15px #aaa;
+  color:#666;
+  font-family: Zapfino;
 }
 
 #site-name { /* The name of the website */

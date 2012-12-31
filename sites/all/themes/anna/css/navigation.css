@@ -40,6 +40,12 @@ li a.active {
 
 #navigation {
   /* overflow: hidden; */ /* Sometimes you want to prevent overlapping with main div. */
+  /*
+	   box-shadow: inset 2px 0px 2px 0px 15px #aaa;
+	   -webkit-box-shadow: inset 2px 0px 2px 0px 15px #aaa;
+	   text-shadow: 2px #aaa;  
+  */
+	box-shadow: 0px -2px 7px -2px #aaa, 0px 1px 7px 1px #aaa;
 }
 
 #navigation .block {
