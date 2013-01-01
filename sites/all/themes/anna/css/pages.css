@@ -15,7 +15,6 @@
 body {
   margin: 0;
   padding: 0;
-
   background-color: #ff6600; /* fallback color if gradients are not supported */
   background-image: -webkit-linear-gradient(top, #fff, #fff 50%, #ff6600); /* For Chrome and Safari */
   background-image: -moz-linear-gradient(top, #fff, #ff6600); /* For old Fx (3.6 to 15) */
@@ -65,6 +64,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 #logo img {
   vertical-align: bottom;
 }
@@ -138,7 +138,7 @@ h2.title, /* Comment section heading */
 h2.comment-form, /* Comment form heading */
 h3.title { /* Comment title */
   margin: 0;
-  font-family: Helvetica, Arial, Verdana, sans-serif;
+  font-family: Georgia, "Times New Roman", serif;	
 }
 
 tr.even { /* Some tables have rows marked even or odd. */

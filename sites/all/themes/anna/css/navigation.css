@@ -67,6 +67,8 @@ li a.active {
   margin: 0;
   padding: 0;
   text-align: left; /* LTR */
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 800;
 }
 
 #navigation ul.links li,
@@ -76,6 +78,11 @@ li a.active {
   list-style-type: none;
   list-style-image: none;
   border-right:1px solid #aaa;
+}
+
+#navigation ul.links li a,
+#navigation ul.menu li a {
+  text-decoration: none;
 }
 
 .region-navigation {
