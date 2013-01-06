@@ -70,6 +70,7 @@
  */
 ?>
 
+<div id="image-banner" style="width:100%; background: url('<?php echo $base_path . $directory . "/images/curl.jpg"; ?>') #333 no-repeat scroll; background-size:cover;">
 <div id="page">
 
   <header id="header" role="banner">
@@ -177,5 +178,5 @@
   <?php print render($page['footer']); ?>
 
 </div><!-- /#page -->
-
+</div><!-- /#image-banner -->
 <?php print render($page['bottom']); ?>
