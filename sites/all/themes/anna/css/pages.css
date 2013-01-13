@@ -24,11 +24,9 @@ body {
 }
 
 #page {
-    background-color: rgba(0,0,0,0.25);
 	max-width: 960px;
 	border-left: 1px dotted #aaa;
 	border-right: 1px dotted #aaa;
-	padding-top: 1.5em;
 	box-shadow: 0px 1px 18px 1px #ccc;
 	position: relative;
 }
@@ -56,7 +54,6 @@ body {
  */
 
 #header {
-    min-height: 10em;
 }
 
 #logo { /* Wrapping link for logo */
@@ -73,18 +70,17 @@ body {
   float: left;
   margin: 0 0 0 3%;
   text-shadow: 10px 5px 15px #aaa;
-  color:#fff;
-  font-family: Zapfino;
+  color:#444;
+  font-family: Georgia;
 }
 
 #site-name { /* The name of the website */
   margin: 0;
   font-size: 2em;
-  line-height: 1.5em;
+  line-height: 1em;
 }
 #site-name a:link,
 #site-name a:visited {
-  color: #fff;
   text-decoration: none;
 }
 #site-name a:hover,
@@ -146,6 +142,22 @@ h2.comment-form, /* Comment form heading */
 h3.title { /* Comment title */
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;	
+}
+
+#banner {
+	margin:0;
+	padding:0;
+	position:relative;
+}
+
+h1.title {
+	padding:0 0 0 3%;
+	margin:0 0 0 0;
+	background-color:rgba(0,0,0,0.3);
+	position:absolute;
+	bottom:0.01em;
+	color:#fff;
+	width:97%;
 }
 
 tr.even { /* Some tables have rows marked even or odd. */

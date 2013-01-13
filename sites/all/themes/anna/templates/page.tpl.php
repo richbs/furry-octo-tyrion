@@ -70,11 +70,9 @@
  */
 ?>
 
-<div id="image-banner" style="width:100%; background: url('<?php echo $base_path . $directory . "/images/curl.jpg"; ?>') #333 no-repeat scroll; background-size:cover;">
 <div id="page">
 
   <header id="header" role="banner">
-
     <?php if ($logo): ?>
       <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home" id="logo"><img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" /></a>
     <?php endif; ?>
@@ -92,7 +90,6 @@
         <?php endif; ?>
       </hgroup><!-- /#name-and-slogan -->
     <?php endif; ?>
-
     <?php if ($secondary_menu): ?>
       <nav id="secondary-menu" role="navigation">
         <?php print theme('links__system_secondary_menu', array(
@@ -112,17 +109,19 @@
     <?php print render($page['header']); ?>
 
   </header>
-
+<div id="banner">
+    <?php print render($title_prefix); ?>
+    <?php if ($title): ?>
+      <h1 class="title" id="page-title"><?php print $title; ?></h1>
+    <?php endif; ?>
+	<img id="image-banner" alt="Banner image" width="100%" src="<?php echo $base_path . $directory . "/images/curl2.jpg"; ?>" />
+</div>		
   <div id="main">
 
     <div id="content" class="column" role="main">
       <?php print render($page['highlighted']); ?>
       <?php print $breadcrumb; ?>
       <a id="main-content"></a>
-      <?php print render($title_prefix); ?>
-      <?php if ($title): ?>
-        <h1 class="title" id="page-title"><?php print $title; ?></h1>
-      <?php endif; ?>
       <?php print render($title_suffix); ?>
       <?php print $messages; ?>
       <?php print render($tabs); ?>
